@@ -1,6 +1,5 @@
 ```hcl
-module "network" {
-  module "vnet" {
+  module "network" {
     source = "libre-devops/azuerrm/network"
 
     rg_name  = local.resource_group_name
