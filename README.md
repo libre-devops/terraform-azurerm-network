@@ -1,6 +1,6 @@
 ```hcl
   module "network" {
-    source = "libre-devops/azuerrm/network"
+    source = "libre-devops/network/azurerm"
 
     rg_name  = local.resource_group_name
     location = local.location
