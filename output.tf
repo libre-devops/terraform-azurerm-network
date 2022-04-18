@@ -18,6 +18,11 @@ output "vnet_address_space" {
   value       = azurerm_virtual_network.vnet.address_space
 }
 
+output "vnet_rg_name" {
+  description = "The resource group name which the VNet is in"
+  value       = azurerm_virtual_network.vnet.resource_group_name
+}
+
 output "vnet_subnets" {
   description = "The ids of subnets created inside the newly created vNet"
   value       = azurerm_subnet.subnet.*.id
