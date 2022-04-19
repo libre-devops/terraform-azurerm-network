@@ -1,23 +1,35 @@
 ```hcl
-  module "network" {
-    source = "libre-devops/network/azurerm"
+module "network" {
+  source = "registry.terraform.io/libre-devops/network/azurerm"
 
-    rg_name  = local.resource_group_name
-    location = local.location
-    address_space   = ["10.0.0.0/16"]
-    subnet_prefixes = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-    subnet_names    = ["subnet1", "subnet2", "subnet3"]
+  rg_name  = module.rg.rg_name // rg-ldo-euw-dev-build
+  location = module.rg.rg_location
 
-    subnet_service_endpoints = {
-      subnet2 = ["Microsoft.Storage", "Microsoft.Sql"],
-      subnet3 = ["Microsoft.AzureActiveDirectory"]
-    }
+  vnet_name     = "vnet-${var.short}-${var.loc}-${terraform.workspace}-01" // vnet-ldo-euw-dev-01
+  vnet_location = module.network.vnet_location
 
-    tags = {
-      environment = "dev"
-      costcenter  = "it"
-    }
+  address_space   = ["10.0.0.0/16"]
+  subnet_prefixes = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  subnet_names    = ["sn1-${module.network.vnet_name}", "sn2-${module.network.vnet_name}", "sn3-${module.network.vnet_name}"] //sn1-vnet-ldo-euw-dev-01
+
+  subnet_service_endpoints = {
+    subnet2 = ["Microsoft.Storage", "Microsoft.Sql"], // Adds extra subnet endpoints
+    subnet3 = ["Microsoft.AzureActiveDirectory"]
   }
+
+  tags = local.tags
+}
+
+module "nsg" {
+  source = "registry.terraform.io/libre-devops/nsg/azurerm"
+
+  rg_name   = module.rg.rg_name
+  location  = module.rg.rg_location
+  nsg_name  = "nsg-build-${var.short}-${var.loc}-${terraform.workspace}-01" // nsg-build-ldo-euw-dev-01
+  subnet_id = element(values(module.network.subnets_ids), 0)                // Adds NSG to sn1-vnet-ldo-euw-dev-01
+
+  tags = module.rg.rg_tags
+}
 ```
 ## Requirements
 
