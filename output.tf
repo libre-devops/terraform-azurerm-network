@@ -28,6 +28,14 @@ output "vnet_subnets" {
   value       = azurerm_subnet.subnet.*.id
 }
 
+output "subnets_name" {
+  value = {
+    for index, subnet in azurerm_subnet.subnet :
+    subnet.name => subnet.name
+  }
+  description = "The name of the subnets created"
+}
+
 output "subnets_ids" {
   value = {
     for index, subnet in azurerm_subnet.subnet :
