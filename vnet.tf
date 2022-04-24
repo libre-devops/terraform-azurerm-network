@@ -13,8 +13,7 @@ resource "azurerm_subnet" "subnet" {
   resource_group_name                            = var.rg_name
   virtual_network_name                           = azurerm_virtual_network.vnet.name
   address_prefixes                               = [var.subnet_prefixes[count.index]]
-#  service_endpoints                              = tolist(lookup(var.subnet_service_endpoints, var.subnet_names[count.index], null))
-  service_endpoints = toset(var.subnet_service_endpoint)
+  service_endpoints                              = toset(lookup(var.subnet_service_endpoints, var.subnet_names[count.index], null))
   enforce_private_link_endpoint_network_policies = lookup(var.subnet_enforce_private_link_endpoint_network_policies, var.subnet_names[count.index], false)
   enforce_private_link_service_network_policies  = lookup(var.subnet_enforce_private_link_service_network_policies, var.subnet_names[count.index], false)
 
