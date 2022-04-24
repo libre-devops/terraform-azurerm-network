@@ -49,6 +49,12 @@ variable "subnet_service_endpoints" {
   default     = {}
 }
 
+variable "subnet_service_endpoint" {
+  description = "A map of subnet name to service endpoints to add to the subnet."
+  type        = list(string)
+  default     = [""]
+}
+
 variable "subnet_enforce_private_link_endpoint_network_policies" {
   description = "A map of subnet name to enable/disable private link endpoint network policies on the subnet."
   type        = map(bool)
