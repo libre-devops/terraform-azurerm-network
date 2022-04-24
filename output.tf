@@ -28,7 +28,7 @@ output "vnet_subnets" {
   value       = azurerm_subnet.subnet.*.id
 }
 
-output "subnets_name" {
+output "subnets_names" {
   value = {
     for index, subnet in azurerm_subnet.subnet :
     subnet.name => subnet.name
