@@ -19,6 +19,11 @@ output "vnet_address_space" {
   value       = azurerm_virtual_network.vnet.address_space
 }
 
+output "vnet_dns_servers" {
+  value       = azurerm_virtual_network.vnet.dns_servers
+  description = "The dns servers of the vnet"
+}
+
 output "vnet_id" {
   description = "The id of the newly created vNet"
   value       = azurerm_virtual_network.vnet.id
