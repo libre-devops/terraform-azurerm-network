@@ -20,7 +20,7 @@ output "vnet_address_space" {
 }
 
 output "vnet_dns_servers" {
-  value       = azurerm_virtual_network.vnet.dns_servers == [] ? ["168.63.129.16"] : azurerm_virtual_network.vnet.dns_servers
+  value       = var.dns_servers == [] ? ["168.63.129.16"] : azurerm_virtual_network.vnet.dns_servers
   description = "The dns servers of the vnet, if it is using Azure default, this module will return the Azure 'wire' IP as a list of string in the 1st element"
 }
 
