@@ -1,5 +1,4 @@
 ```hcl
-```hcl
 module "rg" {
   source = "registry.terraform.io/libre-devops/rg/azurerm"
 
@@ -53,6 +52,7 @@ module "network" {
       }
     }
   }
+}
 ```
 ## Requirements
 
