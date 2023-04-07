@@ -15,7 +15,7 @@ resource "azurerm_subnet" "subnet" {
   address_prefixes                              = [var.subnet_prefixes[count.index]]
   service_endpoints                             = toset(lookup(var.subnet_service_endpoints, var.subnet_names[count.index], null))
   private_endpoint_network_policies_enabled     = lookup(var.subnet_enforce_private_link_endpoint_network_policies, var.subnet_names[count.index], false)
-  enforce_private_link_service_network_policies = lookup(var.subnet_enforce_private_link_service_network_policies, var.subnet_names[count.index], false)
+  private_link_service_network_policies_enabled = lookup(var.subnet_enforce_private_link_service_network_policies, var.subnet_names[count.index], false)
 
   dynamic "delegation" {
     for_each = lookup(var.subnet_delegation, var.subnet_names[count.index], {})
