@@ -1,0 +1,215 @@
+trigger: none
+pr: none
+
+parameters:
+  - name: VARIABLE_GROUP_NAME
+    displayName: "The name of the key vault variable group or variable group containing Azure secrets"
+    type: string
+    default: 'kv-cscot-uks-prd-mgmt-01'
+  - name: poolName
+    displayName: "Azure Pipelines Pool Name"
+    type: string
+    default: 'CyberScotAzdoPrdMgmtLinuxPool'
+    values:
+      - 'Azure Pipelines'
+      - 'CyberScotAzdoPrdMgmtLinuxPool'
+      - 'CyberScotAzdoPrdMgmtWindowsPool'
+  - name: vmImage
+    displayName: "Azure Pipelines VM image - not needed for self-hosted"
+    type: string
+    default: 'ubuntu-latest'
+
+variables:
+  - name: project_name
+    value: "test-build"
+  - name: working_directory
+    value: 'examples/standard'
+  - name: env
+    value: 'prd'
+  - name: short
+    value: 'cscot'
+  - name: loc
+    value: 'uks'
+  - name: checkov_skipped_tests
+    value: 'CKV_AZURE_33,CKV_AZURE_35,CKV_AZURE_50,CKV_AZURE_59,CKV_AZURE_151,CKV_AZURE_177,CKV_AZURE_206,CKV2_AZURE_1,CKV2_AZURE_31,CKV2_AZURE_33'
+  - name: terraform_compliance_policy_path
+    value: 'git:https://github.com/cyber-scot/utilities.git//terraform/helpers/terraform-compliance-tests?ref=main'
+  - name: ARM_CLIENT_ID
+    value: $(SpokeSvpClientId)
+  - name: ARM_CLIENT_SECRET
+    value: $(SpokeSvpClientSecret)
+  - name: ARM_TENANT_ID
+    value: $(SpokeTenantId)
+  - name: ARM_SUBSCRIPTION_ID
+    value: $(SpokeSubId)
+  - name: ARM_USE_AZUREAD
+    value: 'true'
+  - name: ARM_BACKEND_STORAGE_ACCOUNT
+    value: $(SpokeSaName)
+  - name: ARM_BACKEND_BLOB_CONTAINER_NAME
+    value: $(SpokeSaBlobContainerName)
+  - name: ARM_BACKEND_STATE_KEY
+    value: '$(short)-$(loc)-$(env)-$(project_name).terraform.tfstate'
+
+  - group: ${{ parameters.VARIABLE_GROUP_NAME }}
+
+
+stages:
+- stage: TerraformDestroy
+  jobs:
+  - ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+    - job: AzureHostedJob
+      pool:
+        name: 'Azure Pipelines'
+        vmImage: ${{ parameters.vmImage }}
+      workspace:
+        clean: all
+      displayName: 'Terraform Plan'
+      steps:
+      - checkout: self
+
+      - bash: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        displayName: 'Set up Homebrew'
+        workingDirectory: $(working_directory)
+
+      - bash: |
+          if [ -z "${terraform_tfenv_version}" ]; then
+            echo "terraform_tfenv_version is empty or not set., setting to latest" && export terraform_tfenv_version="latest" && \
+            brew install tfenv
+          else
+            echo "terraform_tfenv_version is set, installing terraform version ${terraform_tfenv_version}" && \
+            brew install tfenv@${terraform_tfenv_version}
+          fi
+        displayName: 'Install Tfenv'
+        workingDirectory: $(working_directory)
+
+      - bash: |
+          if [ -z "${terraform_version}" ]; then
+            echo "terraform_version is empty or not set., setting to latest" && export terraform_version="latest"
+    
+          else
+            echo "terraform_version is set, installing terraform version ${terraform_version}"
+          fi
+    
+          tfenv install ${terraform_version} && tfenv use ${terraform_version}
+
+        displayName: 'Setup Tfenv and Install terraform'
+        workingDirectory: $(working_directory)
+
+      - bash: |
+          terraform init \
+          -backend-config="storage_account_name=$(ARM_BACKEND_STORAGE_ACCOUNT }}" \
+          -backend-config="container_name=$(ARM_BACKEND_BLOB_CONTAINER_NAME }}" \
+          -backend-config="key=$(ARM_BACKEND_STATE_KEY }}" && \
+          terraform validate && \
+          terraform plan -destroy -out tfplan.plan
+        displayName: 'Terraform Init, Validate & Plan (Destroy)'
+        workingDirectory: $(working_directory)
+        env:
+          TF_VAR_env: $(env)
+          TF_VAR_short: $(short)
+          TF_VAR_loc: $(loc)
+          ARM_CLIENT_ID: $(SpokeSvpClientId)
+          ARM_CLIENT_SECRET: $(SpokeSvpClientSecret)
+          ARM_TENANT_ID: $(SpokeTenantId)
+          ARM_SUBSCRIPTION_ID: $(SpokeSubId)
+          ARM_USE_AZUREAD: 'true'
+
+      - bash: |
+          terraform apply -auto-approve tfplan.plan
+        displayName: 'Terraform Apply (Destroy)'
+        workingDirectory: $(working_directory)
+        env:
+          TF_VAR_env: $(env)
+          TF_VAR_short: $(short)
+          TF_VAR_loc: $(loc)
+          ARM_CLIENT_ID: $(SpokeSvpClientId)
+          ARM_CLIENT_SECRET: $(SpokeSvpClientSecret)
+          ARM_TENANT_ID: $(SpokeTenantId)
+          ARM_SUBSCRIPTION_ID: $(SpokeSubId)
+          ARM_USE_AZUREAD: 'true'
+
+      - bash: |
+          rm -rf tfplan*
+        displayName: 'Cleanup tfplan'
+        workingDirectory: $(working_directory)
+
+
+  - ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
+    - job: SelfHosted
+      pool:
+        name: ${{ parameters.poolName }}
+      workspace:
+        clean: all
+      displayName: 'Terraform Plan'
+      steps:
+      - checkout: self
+
+      - bash: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        displayName: 'Set up Homebrew'
+        workingDirectory: $(working_directory)
+
+      - bash: |
+          if [ -z "${terraform_tfenv_version}" ]; then
+            echo "terraform_tfenv_version is empty or not set., setting to latest" && export terraform_tfenv_version="latest" && \
+            brew install tfenv
+          else
+            echo "terraform_tfenv_version is set, installing terraform version ${terraform_tfenv_version}" && \
+            brew install tfenv@${terraform_tfenv_version}
+          fi
+        displayName: 'Install Tfenv, TfSec, Terraform-Compliance & CheckOv'
+        workingDirectory: $(working_directory)
+
+      - bash: |
+          if [ -z "${terraform_version}" ]; then
+            echo "terraform_version is empty or not set., setting to latest" && export terraform_version="latest"
+    
+          else
+            echo "terraform_version is set, installing terraform version ${terraform_version}"
+          fi
+    
+          tfenv install ${terraform_version} && tfenv use ${terraform_version}
+
+        displayName: 'Setup Tfenv and Install terraform'
+        workingDirectory: $(working_directory)
+
+      - bash: |
+          terraform init \
+          -backend-config="storage_account_name=$(ARM_BACKEND_STORAGE_ACCOUNT)" \
+          -backend-config="container_name=$(ARM_BACKEND_BLOB_CONTAINER_NAME)" \
+          -backend-config="key=$(ARM_BACKEND_STATE_KEY)" && \
+          terraform validate && \
+          terraform fmt -check && \
+          terraform plan -destroy -out tfplan.plan
+        displayName: 'Terraform Init, Validate & Plan (Destroy)'
+        workingDirectory: $(working_directory)
+        env:
+          TF_VAR_env: $(env)
+          TF_VAR_short: $(short)
+          TF_VAR_loc: $(loc)
+          ARM_CLIENT_ID: $(SpokeSvpClientId)
+          ARM_CLIENT_SECRET: $(SpokeSvpClientSecret)
+          ARM_TENANT_ID: $(SpokeTenantId)
+          ARM_SUBSCRIPTION_ID: $(SpokeSubId)
+          ARM_USE_AZUREAD: 'true'
+
+      - bash: |
+          terraform apply -auto-approve tfplan.plan
+        displayName: 'Terraform Apply (Destroy)'
+        workingDirectory: $(working_directory)
+        env:
+          TF_VAR_env: $(env)
+          TF_VAR_short: $(short)
+          TF_VAR_loc: $(loc)
+          ARM_CLIENT_ID: $(SpokeSvpClientId)
+          ARM_CLIENT_SECRET: $(SpokeSvpClientSecret)
+          ARM_TENANT_ID: $(SpokeTenantId)
+          ARM_SUBSCRIPTION_ID: $(SpokeSubId)
+          ARM_USE_AZUREAD: 'true'
+
+      - bash: |
+          rm -rf tfplan*
+        displayName: 'Cleanup tfplan'
+        workingDirectory: $(working_directory)

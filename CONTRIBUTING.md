@@ -1,68 +1,74 @@
-# Contributing to Libre DevOps repos
-We love your input and welcome community inclusion wherever possible. 
+# Contributing to CyberScot Repositories
 
-We want to make contributing to the community and projects as easy and transparent as possible, whether it's:
+Your contributions mean a lot to us, and we are excited to include the community at every opportunity.
 
-- Reporting a bug
-- Discussing the current state of the code
-- Submitting a fix
-- Proposing new features
-- Becoming a maintainer
+Our goal is to make the process of contributing seamless and straightforward, whether you're:
 
-## We Develop with Github
-We use Github to host code, to track issues and feature requests, as well as accept pull requests.
+- Reporting an issue
+- Reviewing the existing code
+- Proposing a correction
+- Suggesting a new feature
+- Interested in becoming a maintainer
 
-## If you aren't a maintainer yet
-Pull requests are the best way to propose changes to the codebase (we use [Github Flow](https://guides.github.com/introduction/flow/index.html)). We actively welcome your pull requests
+## Our Development Environment is GitHub
 
-## Code style and workflow
-The example workflow for Terraform submissions is as follows, but is applicable for other pieces of code generally:
-1. Fork the repo and create your branch from `main`.
-2. Ensure you have tested your code with `terraform validate`, `tfsec` and `checkov` or other linting and security tools.
-3. Format your terraform using `terraform fmt -recursive` or another code formtter, such as [prettier](https://prettier.io/)
-4. Module files and variable should use a "What you see is what you get" naming convention (WYSIWYG), so for example:
+We leverage GitHub for hosting our code, managing issues, feature requests, and for processing pull requests.
+
+## If You're Not Yet a Maintainer
+
+The most effective way to suggest changes to our codebase is through pull requests, following the [Github Flow](https://guides.github.com/introduction/flow/index.html). We eagerly await your pull requests!
+
+## Code Etiquette and Procedure
+
+While the following workflow is tailored for Terraform submissions, it generally applies to other codes as well:
+
+1. Fork the repository and branch out from `main`.
+2. Ensure you've verified your code with `terraform validate`, `tfsec`, `checkov`, or other linting/security tools.
+3. Use `terraform fmt -recursive` or another formatter like [prettier](https://prettier.io/) to format your Terraform code.
+4. Files and variables should adhere to the "What You See Is What You Get" (WYSIWYG) naming guideline. For instance, in a terraform repo:
 ```shell
-terraform-${provider}-${purpose}/ # Provider may be azurerm for example, and provider might be virtual-network for example
+terraform-${provider}-${purpose}/ # For example, the provider can be 'azurerm' and the purpose can be 'virtual-network'
 |
-├── ${purpose}.tf # For the main terraform function of the terraform code, e.g. a virtual network, so should be called vnet.tf
+├── ${purpose}.tf # The primary function of the Terraform code, e.g., for a virtual network, it would be named 'vnet.tf'
 ├── input.tf      # For input variables
-├── LICENSE       # MIT License only
-├── locals.tf     # For locals if needed
+├── LICENSE       # Exclusively the MIT License
+├── locals.tf     # If locals are required
 ├── output.tf     # For output variables
-├── README.md     # README documentation
+├── README.md     # Documentation
 ```
-5. All `README.md` files should be contain content.  For Terraform, it should always have an example code block of a successful execution of the module, followed by a [terraform-docs](https://github.com/terraform-docs/terraform-docs) output, using the markdown format, for example:
-
+5. Every `README.md` must be informative. For Terraform, always include a code example that successfully executes the module, and a markdown-formatted output from [terraform-docs](https://github.com/terraform-docs/terraform-docs):
 ```shell
 terraform-docs markdown . >> README.md
 ```
 
-6. All variables should be placed in alphabetical order.  For terraform, this can be done using the the util script:
+6. Organize all variables alphabetically. In Terraform, this can be achieved with the following utility script:
 ```shell
-curl https://raw.githubusercontent.com/libre-devops/utils/dev/scripts/terraform/tf-sort.sh | bash
+curl https://raw.githubusercontent.com/cyberscot/utils/main/scripts/terraform/tf-sort.sh | bash
 ```
-7. Issue that pull request!
+7. Now, you're ready to submit your pull request!
 
-## Any contributions you make will be under the MIT Software License
-In short, when you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. Feel free to contact the maintainers if that's a concern.
+## All Contributions are Subject to the MIT License
 
-## Report bugs using Github's [issues](https://github.com/briandk/transcriptase-atom/issues)
-We use GitHub issues to track public bugs. Report a bug by [opening a new issue](); it's that easy!
+In essence, when you provide code changes, your contributions automatically fall under the same [MIT License](http://choosealicense.com/licenses/mit/) that governs the project. If this raises concerns, please reach out to the maintainers.
 
-## Write bug reports with detail, background, and sample code
+## Reporting Bugs
 
-**Great Bug Reports** tend to have:
+For tracking and addressing public bugs, we utilize GitHub [issues](https://github.com/briandk/transcriptase-atom/issues). Simply [open a new issue]() to report a bug. It's that simple!
 
-- A quick summary and/or background
-- Steps to reproduce
-  - Be specific!
-  - Give sample code if you can. 
-- What you expected would happen
-- What actually happens
-- Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
+## How to Write Comprehensive Bug Reports
 
-People *love* thorough bug reports. I'm not even kidding.
+**Exceptional Bug Reports** typically include:
 
+- A concise summary or background
+- Steps to reproduce the issue
+  - Be as detailed as possible
+  - Provide sample code when feasible
+- Your initial expectations
+- The actual result
+- Additional notes or observations, such as potential reasons for the issue or attempted solutions
 
-## License
-By contributing, you agree that your contributions will be licensed under its MIT License.
+Comprehensive bug reports are invaluable to us. Truly, we can't emphasize this enough.
+
+## Licensing Terms
+
+By offering your contributions, you consent to license them under the MIT License.

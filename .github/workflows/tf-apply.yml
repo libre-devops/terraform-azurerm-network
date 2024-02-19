@@ -4,36 +4,117 @@ name: 'Terraform Apply'
 on:
   workflow_dispatch:
 
+
 jobs:
-  azure-terraform-job:
-    name: 'Terraform Build'
+  azure-terraform-apply-job:
+    name: 'Terraform Apply'
     runs-on: ubuntu-latest
-    environment: tst
+    env:
+      project_name: "test-build"
+      working_directory: examples/standard
+      TF_VAR_short: "cscot"
+      TF_VAR_env: "prd"
+      TF_VAR_loc: "uks"
+      checkov_skipped_tests: "CKV_AZURE_33,CKV_AZURE_35,CKV_AZURE_50,CKV_AZURE_59,CKV_AZURE_151,CKV_AZURE_177,CKV_AZURE_206,CKV2_AZURE_1,CKV2_AZURE_31,CKV2_AZURE_33"
+      terraform_compliance_policy_path: "git:https://github.com/cyber-scot/utilities.git//terraform/helpers/terraform-compliance-tests?ref=main"
+      ARM_CLIENT_ID: ${{ secrets.SpokeSvpClientId }}
+      ARM_CLIENT_SECRET: ${{ secrets.SpokeSvpClientSecret }}
+      ARM_TENANT_ID: ${{ secrets.SpokeTenantId }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.SpokeSubId }}
+      ARM_USE_AZUREAD: true
+      ARM_BACKEND_STORAGE_ACCOUNT: ${{ secrets.SpokeSaName }}
+      ARM_BACKEND_BLOB_CONTAINER_NAME: ${{ secrets.SpokeSaBlobContainerName }}
 
     # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
       run:
         shell: bash
+        working-directory: ${{ env.working_directory }}
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Libre DevOps - Run Terraform for Azure - GitHub Action
-        id: terraform-build
-        uses: libre-devops/azure-terraform-gh-action@v1
-        with:
-          terraform-path: "terraform"
-          terraform-workspace-name: "dev"
-          terraform-backend-storage-rg-name: ${{ secrets.SpokeSaRgName }}
-          terraform-backend-storage-account-name: ${{ secrets.SpokeSaName }}
-          terraform-backend-blob-container-name: ${{ secrets.SpokeSaBlobContainerName }}
-          terraform-backend-storage-access-key: ${{ secrets.SpokeSaPrimaryKey }}
-          terraform-backend-state-name: "lbdo-dev-gh.terraform.tfstate"
-          terraform-provider-client-id: ${{ secrets.SpokeSvpClientId }}
-          terraform-provider-client-secret: ${{ secrets.SpokeSvpClientSecret }}
-          terraform-provider-subscription-id: ${{ secrets.SpokeSubId }}
-          terraform-provider-tenant-id: ${{ secrets.SpokeTenantId }}
-          terraform-compliance-path: "git:https://github.com/libre-devops/azure-naming-convention.git//?ref=main"
-          checkov-skipped-tests: "CKV_AZURE_116,CKV_AZURE_117,CKV_AZURE_137,CKV_AZURE_138,CKV_AZURE_139,CKV_AZURE_141,CKV_AZURE_145,CKV_AZURE_151,CKV_AZURE_33,CKV_AZURE_34,CKV_AZURE_35,CKV_AZURE_4,CKV_AZURE_44,CKV_AZURE_50,CKV_AZURE_7,CKV_AZURE_98,CKV2_AZURE_1,CKV2_AZURE_18,CKV2_AZURE_21,CKV2_AZURE_8"
-          run-terraform-destroy: "false"
-          run-terraform-plan-only: "false"
+      - name: Set ARM_BACKEND_STATE_KEY environment variable
+        run: echo "ARM_BACKEND_STATE_KEY=${{ env.TF_VAR_short }}-${{ env.TF_VAR_loc }}-${{ env.TF_VAR_env }}-${{ env.project_name }}.terraform.tfstate" >> $GITHUB_ENV
+
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install Tfenv, TfSec, Terraform-Compliance & CheckOv
+        id: install-packages
+        run: |
+          if [ -z "${terraform_tfenv_version}" ]; then
+            echo "terraform_tfenv_version is empty or not set., setting to latest" && export terraform_tfenv_version="latest" && \
+            brew install tfenv
+          else
+            echo "terraform_tfenv_version is set, installing terraform version ${terraform_tfenv_version}" && \
+            brew install tfenv@${terraform_tfenv_version}
+          fi
+          if [ -z "${terraform_tfsec_version}" ]; then
+            echo "terraform_tfsec_version is empty or not set., setting to latest" && export terraform_tfsec_version="latest" && \
+            brew install tfsec
+          else
+            echo "terraform_tfsec_version is set, installing terraform version ${terraform_tfsec_version}" && \
+            brew install tfsec@${terraform_tfsec_version}
+          fi
+          if [ -z "${terraform_compliance_version}" ]; then
+            echo "terraform_compliance_version is empty or not set., setting to latest" && pip3 install terraform-compliance
+          else
+            echo "terraform_compliance_version is set, installing terraform version ${terraform_tfsec_version}" && pip3 install terraform-compliance==${terraform_compliance_version}
+          fi
+          if [ -z "${terraform_checkov_version}" ]; then
+            echo "terraform_checkov_version is empty or not set., setting to latest" && pip3 install checkov
+          else
+            echo "terraform_checkov_version is set, installing terraform version ${terraform_tfsec_version}" && pip3 install checkov==${terraform_checkov_version}
+          fi
+
+      - name: Setup Tfenv and Install terraform
+        id: setup-tfenv
+        run: |
+          if [ -z "${terraform_version}" ]; then
+            echo "terraform_version is empty or not set., setting to latest" && export terraform_version="latest"
+          
+          else
+            echo "terraform_version is set, installing terraform version ${terraform_version}"
+          fi
+
+          tfenv install ${terraform_version} && tfenv use ${terraform_version}
+
+      - name: Terraform Init, Validate & Plan
+        id: terraform-init-validate-plan
+        run: |
+          terraform init \
+          -backend-config="storage_account_name=${ARM_BACKEND_STORAGE_ACCOUNT}" \
+          -backend-config="container_name=${ARM_BACKEND_BLOB_CONTAINER_NAME}" \
+          -backend-config="key=${ARM_BACKEND_STATE_KEY}" && \
+          terraform validate && \
+          terraform fmt -check && \
+          terraform plan -out tfplan.plan
+          terraform show -json tfplan.plan | tee tfplan.json >/dev/null
+
+      - name: Terraform-Compliance Check
+        id: terraform-compliance-check
+        run : |
+          terraform-compliance -p "tfplan.json" -f "${terraform_compliance_policy_path}"
+
+      - name: TFSec Check
+        id: tfsec-check
+        run : |
+          tfsec . --force-all-dirs
+
+      - name: CheckOv Check
+        id: checkov-check
+        run : |
+          checkov -f tfplan.json --skip-check "${checkov_skipped_tests}"
+
+      - name: Terraform Apply
+        id: terraform-apply-plan
+        run: |
+          terraform apply -auto-approve tfplan.plan
+
+      - name: Cleanup tfplan
+        id: cleanup-tfplan
+        run: |
+          rm -rf tfplan*
+          
