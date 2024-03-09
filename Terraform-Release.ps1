@@ -3,11 +3,11 @@ param(
     [string]$VariablesOutFile = "./variables.tf",
     [string]$OutputsInFile = "./outputs.tf",
     [string]$OutputsOutFile = "./outputs.tf",
-    [string]$GitTag = "1.0.0",
+    [string]$GitTag = "2.0.0",
     [string]$GitCommitMessage = "Update code",
     [bool]$SortInputs = $true,
     [bool]$SortOutputs = $true,
-    [bool]$GitRelease = $true,
+    [bool]$GitRelease = $false,
     [bool]$FormatTerraform = $true,
     [bool]$GenerateNewReadme = $true
 )
