@@ -13,5 +13,5 @@ variable "loc" {
 variable "short" {
   type        = string
   description = "The shorthand name of to be used in the build, e.g. cscot for CyberScot.  Normally passed via TF_VAR."
-  default     = "cscot"
+  default     = "lbdo"
 }

@@ -3,7 +3,7 @@ param(
     [string]$VariablesOutFile = "./variables.tf",
     [string]$OutputsInFile = "./outputs.tf",
     [string]$OutputsOutFile = "./outputs.tf",
-    [string]$GitTag = "2.0.0",
+    [string]$GitTag = "2.0.1",
     [string]$GitCommitMessage = "Update code",
     [bool]$SortInputs = $true,
     [bool]$SortOutputs = $true,

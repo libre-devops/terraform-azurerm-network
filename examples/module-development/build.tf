@@ -1,13 +1,13 @@
 module "rg" {
-  source = "cyber-scot/rg/azurerm"
+  source = "libre-devops/rg/azurerm"
 
-  name     = "rg-${var.short}-${var.loc}-${var.env}-01"
+  rg_name  = "rg-${var.short}-${var.loc}-${var.env}-01"
   location = local.location
   tags     = local.tags
 }
 
 module "network" {
-  source = "cyber-scot/network/azurerm"
+  source = "../../"
 
   rg_name  = module.rg.rg_name
   location = module.rg.rg_location
@@ -28,10 +28,10 @@ module "network" {
       ]
     }
     "sn2-${module.network.vnet_name}" = {
-      prefix = "10.0.1.0/24",
+      address_prefixes = ["10.0.1.0/24"]
     }
     "sn3-${module.network.vnet_name}" = {
-      prefix = "10.0.2.0/24",
+      address_prefixes = ["10.0.2.0/24"]
       delegation = [
         {
           type   = "Microsoft.Network/dnsResolvers" # Custom action declaration

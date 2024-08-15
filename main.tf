@@ -16,7 +16,7 @@ resource "azurerm_subnet" "subnet" {
   address_prefixes                              = toset(each.value.address_prefixes)
   service_endpoints                             = toset(each.value.service_endpoints)
   service_endpoint_policy_ids                   = toset(each.value.service_endpoint_policy_ids)
-  private_endpoint_network_policies_enabled     = each.value.private_endpoint_network_policies_enabled
+  private_endpoint_network_policies             = each.value.private_endpoint_network_policies
   private_link_service_network_policies_enabled = each.value.private_link_service_network_policies_enabled
 
   dynamic "delegation" {
@@ -59,7 +59,7 @@ resource "azurerm_route_table" "this" {
   name                          = each.key
   location                      = var.location
   resource_group_name           = var.rg_name
-  disable_bgp_route_propagation = false
+  bgp_route_propagation_enabled = false
 
   dynamic "route" {
     for_each = each.value.routes
