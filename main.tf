@@ -8,6 +8,8 @@ resource "azurerm_virtual_network" "vnet" {
 }
 
 resource "azurerm_subnet" "subnet" {
+  depends_on = [azurerm_virtual_network.vnet]
+
   for_each = var.subnets
 
   name                                          = each.key
