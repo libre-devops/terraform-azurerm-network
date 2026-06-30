@@ -32,11 +32,12 @@ module "rg" {
 module "network" {
   source = "../../"
 
-  vnet_name         = local.vnet_name
   resource_group_id = module.rg.ids[local.rg_name]
   location          = local.location
-  address_space     = ["10.0.0.0/16"]
   tags              = module.tags.tags
+
+  vnet_name     = local.vnet_name
+  address_space = ["10.0.0.0/16"]
 
   subnets = {
     "snet-app-${local.vnet_name}" = {

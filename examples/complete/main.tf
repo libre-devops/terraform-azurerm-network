@@ -50,13 +50,14 @@ resource "azurerm_route_table" "this" {
 module "network" {
   source = "../../"
 
+  resource_group_id = module.rg.ids[local.rg_name]
+  location          = local.location
+  tags              = module.tags.tags
+
   vnet_name               = local.vnet_name
-  resource_group_id       = module.rg.ids[local.rg_name]
-  location                = local.location
   address_space           = ["10.10.0.0/16"]
   dns_servers             = ["10.10.0.4", "10.10.0.5"]
   flow_timeout_in_minutes = 10
-  tags                    = module.tags.tags
 
   subnets = {
     "snet-app-${local.vnet_name}" = {

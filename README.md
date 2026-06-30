@@ -51,10 +51,12 @@ module "network" {
   source  = "libre-devops/network/azurerm"
   version = "~> 4.0"
 
-  vnet_name           = "vnet-ldo-uks-prd-001"
-  resource_group_name = module.rg.names["rg-ldo-uks-prd-001"]
-  location            = "uksouth"
-  address_space       = ["10.0.0.0/16"]
+  resource_group_id = module.rg.ids["rg-ldo-uks-prd-001"]
+  location          = "uksouth"
+  tags              = module.tags.tags
+
+  vnet_name     = "vnet-ldo-uks-prd-001"
+  address_space = ["10.0.0.0/16"]
 
   subnets = {
     "snet-app-vnet-ldo-uks-prd-001" = {
@@ -149,7 +151,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_address_space"></a> [address\_space](#input\_address\_space) | Address space (CIDR ranges) for the virtual network. Set this OR ip\_address\_pool, not both. | `list(string)` | `[]` | no |
 | <a name="input_bgp_community"></a> [bgp\_community](#input\_bgp\_community) | BGP community for the virtual network, in the format <as-number>:<community-value>. Null for none. | `string` | `null` | no |
-| <a name="input_ddos_protection_plan_id"></a> [ddos\_protection\_plan\_id](#input\_ddos\_protection\_plan\_id) | Resource id of a DDoS protection plan to associate (enabled when set). Null for none. | `string` | `null` | no |
+| <a name="input_ddos_protection_plan"></a> [ddos\_protection\_plan](#input\_ddos\_protection\_plan) | DDoS protection plan to associate. id is the plan resource id; enable defaults to true but the caller controls it. Null for none. | <pre>object({<br/>    id     = string<br/>    enable = optional(bool, true)<br/>  })</pre> | `null` | no |
 | <a name="input_dns_servers"></a> [dns\_servers](#input\_dns\_servers) | Custom DNS servers for the virtual network. Empty uses Azure-provided DNS. | `list(string)` | `[]` | no |
 | <a name="input_edge_zone"></a> [edge\_zone](#input\_edge\_zone) | Edge zone within the Azure region. Null for none. | `string` | `null` | no |
 | <a name="input_encryption_enforcement"></a> [encryption\_enforcement](#input\_encryption\_enforcement) | When set, enables virtual network encryption with this enforcement. Allowed: AllowUnencrypted, DropUnencrypted. Null leaves encryption unset (encryption needs supported VM SKUs, so it is opt-in). | `string` | `null` | no |

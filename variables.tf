@@ -15,10 +15,13 @@ variable "bgp_community" {
   default     = null
 }
 
-variable "ddos_protection_plan_id" {
-  description = "Resource id of a DDoS protection plan to associate (enabled when set). Null for none."
-  type        = string
-  default     = null
+variable "ddos_protection_plan" {
+  description = "DDoS protection plan to associate. id is the plan resource id; enable defaults to true but the caller controls it. Null for none."
+  type = object({
+    id     = string
+    enable = optional(bool, true)
+  })
+  default = null
 }
 
 variable "dns_servers" {

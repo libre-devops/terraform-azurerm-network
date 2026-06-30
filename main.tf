@@ -11,16 +11,17 @@ locals {
 }
 
 resource "azurerm_virtual_network" "this" {
+  resource_group_name = local.resource_group_name
+  location            = var.location
+  tags                = var.tags
+
   name                           = var.vnet_name
-  resource_group_name            = local.resource_group_name
-  location                       = var.location
   address_space                  = length(var.address_space) > 0 ? var.address_space : null
   dns_servers                    = var.dns_servers
   bgp_community                  = var.bgp_community
   flow_timeout_in_minutes        = var.flow_timeout_in_minutes
   edge_zone                      = var.edge_zone
   private_endpoint_vnet_policies = var.private_endpoint_vnet_policies
-  tags                           = var.tags
 
   dynamic "ip_address_pool" {
     for_each = var.ip_address_pool != null ? [var.ip_address_pool] : []
@@ -31,10 +32,10 @@ resource "azurerm_virtual_network" "this" {
   }
 
   dynamic "ddos_protection_plan" {
-    for_each = var.ddos_protection_plan_id != null ? [1] : []
+    for_each = var.ddos_protection_plan != null ? [var.ddos_protection_plan] : []
     content {
-      id     = var.ddos_protection_plan_id
-      enable = true
+      id     = ddos_protection_plan.value.id
+      enable = ddos_protection_plan.value.enable
     }
   }
 
@@ -49,9 +50,10 @@ resource "azurerm_virtual_network" "this" {
 resource "azurerm_subnet" "this" {
   for_each = var.subnets
 
+  resource_group_name  = local.resource_group_name
+  virtual_network_name = azurerm_virtual_network.this.name
+
   name                                          = each.key
-  resource_group_name                           = local.resource_group_name
-  virtual_network_name                          = azurerm_virtual_network.this.name
   address_prefixes                              = length(each.value.address_prefixes) > 0 ? each.value.address_prefixes : null
   service_endpoints                             = each.value.service_endpoints
   service_endpoint_policy_ids                   = each.value.service_endpoint_policy_ids

@@ -51,10 +51,12 @@ module "network" {
   source  = "libre-devops/network/azurerm"
   version = "~> 4.0"
 
-  vnet_name           = "vnet-ldo-uks-prd-001"
-  resource_group_name = module.rg.names["rg-ldo-uks-prd-001"]
-  location            = "uksouth"
-  address_space       = ["10.0.0.0/16"]
+  resource_group_id = module.rg.ids["rg-ldo-uks-prd-001"]
+  location          = "uksouth"
+  tags              = module.tags.tags
+
+  vnet_name     = "vnet-ldo-uks-prd-001"
+  address_space = ["10.0.0.0/16"]
 
   subnets = {
     "snet-app-vnet-ldo-uks-prd-001" = {
