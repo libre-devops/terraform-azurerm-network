@@ -28,6 +28,11 @@ run "creates_vnet_and_subnet" {
     condition     = length(azurerm_subnet.this) == length(var.subnets)
     error_message = "One subnet should be created per entry."
   }
+
+  assert {
+    condition     = output.subnet_ids_zipmap["snet-app-vnet-ldo-uks-tst-001"].name == "snet-app-vnet-ldo-uks-tst-001"
+    error_message = "subnet_ids_zipmap should map each subnet name to a { name, id } object."
+  }
 }
 
 run "parses_resource_group_id" {

@@ -13,6 +13,11 @@ output "subnet_ids" {
   value       = { for name, subnet in azurerm_subnet.this : name => subnet.id }
 }
 
+output "subnet_ids_zipmap" {
+  description = "Map of subnet name to a { name, id } object, so the whole object can be passed where something needs the name and id together."
+  value       = { for name, subnet in azurerm_subnet.this : name => { name = subnet.name, id = subnet.id } }
+}
+
 output "subnet_names" {
   description = "The subnet names."
   value       = keys(azurerm_subnet.this)

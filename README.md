@@ -172,6 +172,7 @@ No modules.
 | <a name="output_resource_group_name"></a> [resource\_group\_name](#output\_resource\_group\_name) | Resource group name parsed from resource\_group\_id. |
 | <a name="output_subnet_address_prefixes"></a> [subnet\_address\_prefixes](#output\_subnet\_address\_prefixes) | Map of subnet name to its address prefixes. |
 | <a name="output_subnet_ids"></a> [subnet\_ids](#output\_subnet\_ids) | Map of subnet name to its id. |
+| <a name="output_subnet_ids_zipmap"></a> [subnet\_ids\_zipmap](#output\_subnet\_ids\_zipmap) | Map of subnet name to a { name, id } object, so the whole object can be passed where something needs the name and id together. |
 | <a name="output_subnet_names"></a> [subnet\_names](#output\_subnet\_names) | The subnet names. |
 | <a name="output_subnet_nsg_association_ids"></a> [subnet\_nsg\_association\_ids](#output\_subnet\_nsg\_association\_ids) | Map of subnet name to its network security group association id. |
 | <a name="output_subnet_route_table_association_ids"></a> [subnet\_route\_table\_association\_ids](#output\_subnet\_route\_table\_association\_ids) | Map of subnet name to its route table association id. |
