@@ -1,0 +1,26 @@
+# Trivy scan waivers for this module.
+#
+# This is the machine-applied source of truth for security-scan exceptions: Invoke-LdoTrivy (and
+# therefore `just scan`, `just validate`, and the CI scan) passes this file with --ignorefile, so a
+# waived finding stops failing the build. Every entry MUST also have a row in the "Security scan
+# exceptions" table in HEADER.md, with the same id and a justification, so the waiver is auditable.
+#
+# Rules:
+#   - Only waive a finding you have a real, defensible reason to waive. HIGH/CRITICAL is otherwise
+#     merge-blocking (see the Libre DevOps Terraform standard); a waiver is a deliberate, reviewed
+#     decision, never a way to quiet a finding you should fix.
+#   - Prefer scoping with paths so the waiver only applies where intended.
+#   - Where the finding is out of this module's scope, point the justification at the Libre DevOps
+#     module that does address it (for example the private-endpoint module).
+#
+# Format (uncomment and adapt; keep HEADER.md in sync):
+#
+# misconfigurations:
+#   - id: AVD-AZU-0012
+#     paths:
+#       - "main.tf"
+#     statement: >-
+#       This module only deploys the resource group. Network rules and private networking are
+#       configured by the consuming stack; use the Libre DevOps private-endpoint module for PEs.
+
+misconfigurations: []

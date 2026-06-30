@@ -1,74 +1,73 @@
-# Contributing to CyberScot Repositories
+# Contributing to Libre DevOps repositories
 
-Your contributions mean a lot to us, and we are excited to include the community at every opportunity.
+Your contributions mean a lot to us, and we welcome the community at every opportunity, whether
+you are reporting an issue, reviewing code, proposing a fix, suggesting a feature, or interested
+in becoming a maintainer.
 
-Our goal is to make the process of contributing seamless and straightforward, whether you're:
+## Development happens on GitHub
 
-- Reporting an issue
-- Reviewing the existing code
-- Proposing a correction
-- Suggesting a new feature
-- Interested in becoming a maintainer
+We use GitHub to host the code, track issues and feature requests, and review pull requests.
+The most effective way to propose a change is a pull request following the
+[GitHub flow](https://docs.github.com/en/get-started/using-github/github-flow).
 
-## Our Development Environment is GitHub
+## Workflow
 
-We leverage GitHub for hosting our code, managing issues, feature requests, and for processing pull requests.
+1. Fork the repository and branch from `main`.
+2. Make your change, keeping it consistent with the
+   [Libre DevOps standards](https://libredevops.org/docs/documents).
+3. Verify your Terraform with `just validate` (format check, validate, tflint, and a `trivy config`
+   scan), or `just scan` for the Trivy scan on its own. See "Security scanning and exceptions" below.
+   The engine that the action runs is `Invoke-LdoTerraform.ps1`, which wraps this lifecycle using the
+   [LibreDevOpsHelpers](https://www.powershellgallery.com/packages/LibreDevOpsHelpers) module.
+4. For Terraform module repositories, run `just docs` (`Sort-LdoTerraform.ps1`) to sort variables and
+   outputs, format, and regenerate the README from `HEADER.md`. See "Sorting and docs style" below.
+5. Keep PowerShell clean: PSScriptAnalyzer and the Pester tests under `Tests/` must pass.
+6. Follow the naming convention `terraform-${provider}-${purpose}` for module repositories, and
+   the [Azure naming convention](https://libredevops.org/docs/documents/azure-naming-convention)
+   for resources.
 
-## If You're Not Yet a Maintainer
+## Security scanning and exceptions (Trivy)
 
-The most effective way to suggest changes to our codebase is through pull requests, following the [Github Flow](https://guides.github.com/introduction/flow/index.html). We eagerly await your pull requests!
+The `trivy config` scan gates on HIGH and CRITICAL findings (these fail the build). MEDIUM, LOW, and
+informational findings are reported for awareness but do not fail. Run `just scan` for the scan on
+its own, or `just validate` for the full offline gates.
 
-## Code Etiquette and Procedure
+A finding may only be waived with a real, defensible reason, never to silence something that should
+be fixed. Record every waiver in two places, kept in sync:
 
-While the following workflow is tailored for Terraform submissions, it generally applies to other codes as well:
+- `.trivyignore.yaml` at the module root, the machine-applied source of truth, with the `id`,
+  optional `paths` to scope the waiver, and a `statement` recording why; and
+- the "Security scan exceptions" table in the README, so the reason is auditable.
 
-1. Fork the repository and branch out from `main`.
-2. Ensure you've verified your code with `terraform validate`, `tfsec`, `checkov`, or other linting/security tools.
-3. Use `terraform fmt -recursive` or another formatter like [prettier](https://prettier.io/) to format your Terraform code.
-4. Files and variables should adhere to the "What You See Is What You Get" (WYSIWYG) naming guideline. For instance, in a terraform repo:
-```shell
-terraform-${provider}-${purpose}/ # For example, the provider can be 'azurerm' and the purpose can be 'virtual-network'
-|
-├── ${purpose}.tf # The primary function of the Terraform code, e.g., for a virtual network, it would be named 'vnet.tf'
-├── input.tf      # For input variables
-├── LICENSE       # Exclusively the MIT License
-├── locals.tf     # If locals are required
-├── output.tf     # For output variables
-├── README.md     # Documentation
-```
-5. Every `README.md` must be informative. For Terraform, always include a code example that successfully executes the module, and a markdown-formatted output from [terraform-docs](https://github.com/terraform-docs/terraform-docs):
-```shell
-terraform-docs markdown . >> README.md
-```
+Where a finding is out of the module's scope, point the justification at the Libre DevOps module that
+does address it (for example the private-endpoint module). Both the file and the table are reviewed
+in the pull request.
 
-6. Organize all variables alphabetically. In Terraform, this can be achieved with the following utility script:
-```shell
-curl https://raw.githubusercontent.com/cyberscot/utils/main/scripts/terraform/tf-sort.sh | bash
-```
-7. Now, you're ready to submit your pull request!
+## Sorting and docs style
 
-## All Contributions are Subject to the MIT License
+Resources live in `main.tf`. Keep `variables.tf` and `outputs.tf` declarations sorted alphabetically
+by name, one blank line between blocks, and put any comment describing a variable or output directly
+above its block (the comment travels with the block when it is sorted). Give every variable a `type`
+and a `description`.
 
-In essence, when you provide code changes, your contributions automatically fall under the same [MIT License](http://choosealicense.com/licenses/mit/) that governs the project. If this raises concerns, please reach out to the maintainers.
+Do not hand-edit the generated parts of a README. Run `just docs` (which calls
+`Sort-LdoTerraform.ps1 -IncludeExamples`) to sort the variables and outputs, format the Terraform,
+and regenerate the `terraform-docs` section of the module README and each example README from its
+`HEADER.md`. Edit `HEADER.md` for the hand-written header above the markers, then commit the
+regenerated `README.md` files alongside your change.
 
-## Reporting Bugs
+## Pull requests
 
-For tracking and addressing public bugs, we utilize GitHub [issues](https://github.com/briandk/transcriptase-atom/issues). Simply [open a new issue]() to report a bug. It's that simple!
+- Keep changes focused and the history readable.
+- Fill in the pull request template, including testing evidence.
+- Ensure CI is green: format, validate, lint, scan, and tests all pass before review.
 
-## How to Write Comprehensive Bug Reports
+## Reporting issues
 
-**Exceptional Bug Reports** typically include:
+Open an issue using the bug report or feature request template. Include versions (terraform,
+azurerm, the action, and LibreDevOpsHelpers) and clear reproduction steps.
 
-- A concise summary or background
-- Steps to reproduce the issue
-  - Be as detailed as possible
-  - Provide sample code when feasible
-- Your initial expectations
-- The actual result
-- Additional notes or observations, such as potential reasons for the issue or attempted solutions
+## Licence
 
-Comprehensive bug reports are invaluable to us. Truly, we can't emphasize this enough.
-
-## Licensing Terms
-
-By offering your contributions, you consent to license them under the MIT License.
+By contributing, you agree that your contributions are licensed under the
+[MIT License](./LICENSE).

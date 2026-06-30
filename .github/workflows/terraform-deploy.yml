@@ -1,0 +1,46 @@
+name: Terraform Deploy
+
+# Manual apply of an example stack via the libre-devops/terraform-azure action. This workflow only
+# ever runs on a manual dispatch (no push/PR trigger), so nothing is applied automatically; it is
+# here for on-demand applies. It needs the org OIDC variables and the org secrets the tenant
+# bootstrap publishes (same as the CI self-test).
+on:
+  workflow_dispatch:
+    inputs:
+      stack:
+        description: Example stack to apply.
+        type: choice
+        options: [minimal, complete]
+        default: minimal
+      workspace:
+        description: Terraform workspace (environment).
+        type: string
+        default: dev
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Plan and apply (${{ inputs.stack }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Plan and apply the example
+        uses: libre-devops/terraform-azure@v1
+        with:
+          terraform-code-location: examples
+          terraform-stack-to-run-json: '["${{ inputs.stack }}"]'
+          terraform-workspace: ${{ inputs.workspace }}
+          run-terraform-plan: true
+          run-terraform-apply: true
+          # Module resource groups have no locks; skip the lock-dance.
+          remove-resource-group-locks-before-tf-run: false
+          arm-client-id: ${{ vars.AZURE_CLIENT_ID }}
+          arm-tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          arm-subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          firewall-storage-account-name: ${{ secrets.TFSTATE_STORAGE_ACCOUNT }}
+          firewall-storage-resource-group: ${{ secrets.TFSTATE_RESOURCE_GROUP }}
+          terraform-init-extra-args-json: '["-reconfigure","-upgrade","-backend-config=resource_group_name=${{ secrets.TFSTATE_RESOURCE_GROUP }}","-backend-config=storage_account_name=${{ secrets.TFSTATE_STORAGE_ACCOUNT }}","-backend-config=container_name=${{ secrets.TFSTATE_BLOB_CONTAINER }}"]'

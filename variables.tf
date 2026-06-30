@@ -1,50 +1,98 @@
+variable "address_space" {
+  description = "Address space (CIDR ranges) for the virtual network. Set this OR ip_address_pool, not both."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = (length(var.address_space) > 0) != (var.ip_address_pool != null)
+    error_message = "Set exactly one of address_space or ip_address_pool on the virtual network."
+  }
+}
+
+variable "bgp_community" {
+  description = "BGP community for the virtual network, in the format <as-number>:<community-value>. Null for none."
+  type        = string
+  default     = null
+}
+
+variable "ddos_protection_plan_id" {
+  description = "Resource id of a DDoS protection plan to associate (enabled when set). Null for none."
+  type        = string
+  default     = null
+}
+
 variable "dns_servers" {
-  description = "The DNS servers to be used with vNet."
+  description = "Custom DNS servers for the virtual network. Empty uses Azure-provided DNS."
   type        = list(string)
   default     = []
 }
 
-variable "location" {
-  description = "The location for this resource to be put in"
+variable "edge_zone" {
+  description = "Edge zone within the Azure region. Null for none."
   type        = string
+  default     = null
 }
 
-variable "nsg_ids" {
-  description = "A map of subnet name to Network Security Group IDs"
-  type        = map(string)
-  default     = {}
-}
-
-variable "rg_name" {
-  description = "The name of the resource group, this module does not create a resource group, it is expecting the value of a resource group already exists"
+variable "encryption_enforcement" {
+  description = "When set, enables virtual network encryption with this enforcement. Allowed: AllowUnencrypted, DropUnencrypted. Null leaves encryption unset (encryption needs supported VM SKUs, so it is opt-in)."
   type        = string
+  default     = null
+
   validation {
-    condition     = length(var.rg_name) > 1 && length(var.rg_name) <= 24
-    error_message = "Resource group name is not valid."
+    condition     = var.encryption_enforcement == null ? true : contains(["AllowUnencrypted", "DropUnencrypted"], var.encryption_enforcement)
+    error_message = "encryption_enforcement must be AllowUnencrypted or DropUnencrypted."
   }
 }
 
-variable "route_tables" {
-  description = "Map of Route Tables to be created, where the key is the name of the Route Table."
-  type = map(object({
-    routes = map(object({
-      address_prefix                = string
-      next_hop_type                 = string
-      next_hop_in_ip_address        = optional(string)
-      bgp_route_propagation_enabled = optional(bool, false)
-    }))
-  }))
-  default = {}
+variable "flow_timeout_in_minutes" {
+  description = "Flow timeout in minutes (4 to 30). Null uses the Azure default."
+  type        = number
+  default     = null
+
+  validation {
+    condition     = var.flow_timeout_in_minutes == null ? true : (var.flow_timeout_in_minutes >= 4 && var.flow_timeout_in_minutes <= 30)
+    error_message = "flow_timeout_in_minutes must be between 4 and 30."
+  }
 }
 
-variable "route_tables_ids" {
-  description = "A map of subnet name to Route table ids"
-  type        = map(string)
-  default     = {}
+variable "ip_address_pool" {
+  description = "Allocate the virtual network's address space from a Network Manager IPAM pool. Set this OR address_space, not both."
+  type = object({
+    id                     = string
+    number_of_ip_addresses = string
+  })
+  default = null
 }
 
-variable "subnet_delegations_actions" {
-  type = map(list(string))
+variable "location" {
+  description = "Azure region for the virtual network."
+  type        = string
+}
+
+variable "private_endpoint_vnet_policies" {
+  description = "Private endpoint policy mode for the virtual network. Allowed: Disabled, Basic."
+  type        = string
+  default     = "Disabled"
+
+  validation {
+    condition     = contains(["Disabled", "Basic"], var.private_endpoint_vnet_policies)
+    error_message = "private_endpoint_vnet_policies must be Disabled or Basic."
+  }
+}
+
+variable "resource_group_id" {
+  description = "Resource id of the resource group to create the virtual network and subnets in. The name and subscription are parsed from it (pass the rg module's ids output, for example module.rg.ids[\"rg-...\"])."
+  type        = string
+
+  validation {
+    condition     = try(provider::azurerm::parse_resource_id(var.resource_group_id).resource_type, "") == "resourceGroups"
+    error_message = "resource_group_id must be a resource group id of the form /subscriptions/<sub>/resourceGroups/<name>."
+  }
+}
+
+variable "subnet_delegation_actions" {
+  description = "Lookup of subnet delegation service name to its delegated actions. A subnet's delegations reference these by service name; a service not listed here falls back to the platform-inferred actions."
+  type        = map(list(string))
   default = {
     "GitHub.Network/networkSettings"         = ["Microsoft.Network/virtualNetworks/subnets/action"]
     "Microsoft.ApiManagement/service"        = ["Microsoft.Network/virtualNetworks/subnets/action"]
@@ -100,7 +148,7 @@ variable "subnet_delegations_actions" {
     "Microsoft.Network/dnsResolvers"                 = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
     "Microsoft.Network/fpgaNetworkInterfaces"        = ["Microsoft.Network/virtualNetworks/subnets/action"]
     "Microsoft.Network/managedResolvers"             = ["Microsoft.Network/virtualNetworks/subnets/action"]
-    "Microsoft.Network/networkWatchers."             = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    "Microsoft.Network/networkWatchers"              = ["Microsoft.Network/virtualNetworks/subnets/action"]
     "Microsoft.Network/virtualNetworkGateways"       = ["Microsoft.Network/virtualNetworks/subnets/action"]
     "Microsoft.Orbital/orbitalGateways"              = ["Microsoft.Network/virtualNetworks/subnets/action"]
     "Microsoft.PowerPlatform/enterprisePolicies"     = ["Microsoft.Network/virtualNetworks/subnets/action"]
@@ -127,70 +175,72 @@ variable "subnet_delegations_actions" {
     "PaloAltoNetworks.Cloudngfw/firewalls"    = ["Microsoft.Network/virtualNetworks/subnets/action"]
     "Qumulo.Storage/fileSystems"              = ["Microsoft.Network/virtualNetworks/subnets/action"]
   }
-  description = "List of delegation actions when delegations of subnets is used, will be done for query"
-}
-
-variable "subnet_enforce_private_link_endpoint_network_policies" {
-  description = "A map of subnet name to enable/disable private link endpoint network policies on the subnet."
-  type        = map(bool)
-  default     = {}
-}
-
-variable "subnet_enforce_private_link_service_network_policies" {
-  description = "A map of subnet name to enable/disable private link service network policies on the subnet."
-  type        = map(bool)
-  default     = {}
-}
-
-variable "subnet_route_table_associations" {
-  description = "Map where the key is the subnet name and the value is the name of the route table to associate with."
-  type        = map(string)
-  default     = {}
-}
-
-variable "subnet_service_endpoints" {
-  description = "A map of subnet name to service endpoints to add to the subnet."
-  type        = map(any)
-  default     = {}
 }
 
 variable "subnets" {
-  description = "Map of subnets with their properties"
+  description = <<-EOT
+    Subnets to create in the virtual network, keyed by subnet name. Each subnet sets its address
+    prefixes and optional service endpoints, delegations (service names only; the actions are looked
+    up from subnet_delegation_actions), and an optional NSG / route table id to associate.
+
+    Secure defaults: private_endpoint_network_policies defaults to "Enabled" (enforces NSG and route
+    table rules on private endpoints), and default_outbound_access_enabled defaults to false (no
+    implicit outbound internet; Azure is retiring default outbound, so attach an explicit egress such
+    as the nat-gateway module). Both are overridable per subnet.
+  EOT
   type = map(object({
-    address_prefixes                              = set(string)
-    private_endpoint_network_policies             = optional(string, "Disabled")
-    private_link_service_network_policies_enabled = optional(bool, false)
-    service_endpoint_policy_ids                   = optional(set(string))
-    delegation = optional(list(object({
-      type   = optional(string)
-      action = optional(list(string)) # Optional user-defined action
-    })))
-    service_endpoints = optional(list(string))
+    address_prefixes                              = optional(list(string), [])
+    ip_address_pool                               = optional(object({ id = string, number_of_ip_addresses = string }), null)
+    service_endpoints                             = optional(list(string), [])
+    service_endpoint_policy_ids                   = optional(list(string), [])
+    delegations                                   = optional(list(string), [])
+    private_endpoint_network_policies             = optional(string, "Enabled")
+    private_link_service_network_policies_enabled = optional(bool, true)
+    default_outbound_access_enabled               = optional(bool, false)
+    sharing_scope                                 = optional(string, null)
+    nsg_id                                        = optional(string, null)
+    route_table_id                                = optional(string, null)
   }))
   default = {}
-}
-
-variable "tags" {
-  description = "The tags to associate with your network and subnets."
-  type        = map(string)
-}
-
-variable "vnet_address_space" {
-  type        = list(string)
-  description = "The address space that is used by the virtual network."
 
   validation {
-    condition     = can([for cidr in var.vnet_address_space : cidrsubnet(cidr, 0, 0)])
-    error_message = "Each item in vnet_address_space must be a valid CIDR notation."
+    condition     = alltrue([for name in keys(var.subnets) : length(name) >= 1 && length(name) <= 80])
+    error_message = "Each subnet name must be 1 to 80 characters (the Azure subnet name limit)."
+  }
+
+  validation {
+    condition     = alltrue([for s in values(var.subnets) : (length(s.address_prefixes) > 0) != (s.ip_address_pool != null)])
+    error_message = "Each subnet must set exactly one of address_prefixes or ip_address_pool."
+  }
+
+  validation {
+    condition     = alltrue([for s in values(var.subnets) : contains(["Disabled", "Enabled", "NetworkSecurityGroupEnabled", "RouteTableEnabled"], s.private_endpoint_network_policies)])
+    error_message = "subnets[*].private_endpoint_network_policies must be Disabled, Enabled, NetworkSecurityGroupEnabled, or RouteTableEnabled."
+  }
+
+  validation {
+    condition     = alltrue([for s in values(var.subnets) : s.sharing_scope == null || s.sharing_scope == "Tenant"])
+    error_message = "subnets[*].sharing_scope must be null or \"Tenant\"."
+  }
+
+  validation {
+    condition     = alltrue([for s in values(var.subnets) : s.sharing_scope == null || s.default_outbound_access_enabled == false])
+    error_message = "subnets[*].sharing_scope can only be set when default_outbound_access_enabled is false."
   }
 }
 
-variable "vnet_location" {
-  description = "The location of the vnet to create. Defaults to the location of the resource group."
-  type        = string
+variable "tags" {
+  description = "Tags to apply to the virtual network."
+  type        = map(string)
+  default     = {}
 }
 
 variable "vnet_name" {
-  description = "Name of the vnet to create"
+  description = "Name of the virtual network."
   type        = string
+
+  validation {
+    condition     = length(var.vnet_name) >= 2 && length(var.vnet_name) <= 64
+    error_message = "vnet_name must be 2 to 64 characters (the Azure virtual network name limit)."
+  }
 }

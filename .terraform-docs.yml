@@ -1,0 +1,36 @@
+formatter: "markdown table"
+version: ">= 0.19.0"
+
+# terraform.tf has no leading comment block, so the generated header is empty and HEADER.md
+# (above the markers) is the only header.
+header-from: terraform.tf
+
+recursive:
+  enabled: false
+
+output:
+  file: README.md
+  mode: inject
+  template: |-
+    <!-- BEGIN_TF_DOCS -->
+    {{ .Content }}
+    <!-- END_TF_DOCS -->
+
+sort:
+  enabled: true
+  by: name
+
+settings:
+  anchor: true
+  color: true
+  default: true
+  description: true
+  escape: true
+  hide-empty: false
+  html: true
+  indent: 2
+  lockfile: false
+  read-comments: true
+  required: true
+  sensitive: true
+  type: true

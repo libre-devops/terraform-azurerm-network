@@ -1,55 +1,79 @@
-output "route_table_ids" {
-  description = "Map of Route Table names to their IDs."
-  value       = { for name, rt in azurerm_route_table.this : name => rt.id }
+output "resource_group_name" {
+  description = "Resource group name parsed from resource_group_id."
+  value       = local.resource_group_name
 }
 
-output "subnet_ids_associated_with_route_tables" {
-  value       = local.grouped_by_route_table
-  description = "The IDs of the subnets associated with each route table"
+output "subnet_address_prefixes" {
+  description = "Map of subnet name to its address prefixes."
+  value       = { for name, subnet in azurerm_subnet.this : name => subnet.address_prefixes }
 }
 
-output "subnets_ids" {
-  value = {
-    for key, subnet in azurerm_subnet.subnet :
-    key => subnet.id
-  }
-  description = "The ids of the subnets created"
+output "subnet_ids" {
+  description = "Map of subnet name to its id."
+  value       = { for name, subnet in azurerm_subnet.this : name => subnet.id }
 }
 
-output "subnets_names" {
-  value = {
-    for index, subnet in azurerm_subnet.subnet :
-    subnet.id => subnet.name
-  }
-  description = "The name of the subnets created"
+output "subnet_names" {
+  description = "The subnet names."
+  value       = keys(azurerm_subnet.this)
+}
+
+output "subnet_nsg_association_ids" {
+  description = "Map of subnet name to its network security group association id."
+  value       = { for name, assoc in azurerm_subnet_network_security_group_association.this : name => assoc.id }
+}
+
+output "subnet_route_table_association_ids" {
+  description = "Map of subnet name to its route table association id."
+  value       = { for name, assoc in azurerm_subnet_route_table_association.this : name => assoc.id }
+}
+
+output "subnets" {
+  description = "The full azurerm_subnet resources, keyed by subnet name."
+  value       = azurerm_subnet.this
+}
+
+output "subscription_id" {
+  description = "Subscription id parsed from resource_group_id."
+  value       = local.rg.subscription_id
 }
 
 output "vnet_address_space" {
-  description = "The address space of the newly created vNet"
-  value       = azurerm_virtual_network.vnet.address_space
+  description = "The address space of the virtual network."
+  value       = azurerm_virtual_network.this.address_space
 }
 
 output "vnet_dns_servers" {
-  value       = var.dns_servers == [] ? ["168.63.129.16"] : var.dns_servers
-  description = "The dns servers of the vnet, if it is using Azure default, this module will return the Azure 'wire' IP as a list of string in the 1st element"
+  description = "The DNS servers set on the virtual network."
+  value       = azurerm_virtual_network.this.dns_servers
+}
+
+output "vnet_guid" {
+  description = "The GUID of the virtual network."
+  value       = azurerm_virtual_network.this.guid
 }
 
 output "vnet_id" {
-  description = "The id of the newly created vNet"
-  value       = azurerm_virtual_network.vnet.id
+  description = "The id of the virtual network."
+  value       = azurerm_virtual_network.this.id
 }
 
 output "vnet_location" {
-  description = "The location of the newly created vNet"
-  value       = azurerm_virtual_network.vnet.location
+  description = "The region of the virtual network."
+  value       = azurerm_virtual_network.this.location
 }
 
 output "vnet_name" {
-  description = "The Name of the newly created vNet"
-  value       = azurerm_virtual_network.vnet.name
+  description = "The name of the virtual network."
+  value       = azurerm_virtual_network.this.name
 }
 
-output "vnet_rg_name" {
-  description = "The resource group name which the VNet is in"
-  value       = azurerm_virtual_network.vnet.resource_group_name
+output "vnet_resource_group_name" {
+  description = "The resource group of the virtual network."
+  value       = azurerm_virtual_network.this.resource_group_name
+}
+
+output "vnet_tags" {
+  description = "The tags on the virtual network."
+  value       = azurerm_virtual_network.this.tags
 }
