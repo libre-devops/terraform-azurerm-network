@@ -1,12 +1,31 @@
 formatter: "markdown table"
 version: ">= 0.19.0"
 
-# terraform.tf has no leading comment block, so the generated header is empty and HEADER.md
-# (above the markers) is the only header.
 header-from: terraform.tf
 
 recursive:
   enabled: false
+
+# Embed the example's own main.tf at the top of the generated section so the README shows exactly
+# what the example does, then the usual terraform-docs sections.
+content: |-
+  ## Example configuration
+
+  ```hcl
+  {{ include "main.tf" }}
+  ```
+
+  {{ .Requirements }}
+
+  {{ .Providers }}
+
+  {{ .Modules }}
+
+  {{ .Resources }}
+
+  {{ .Inputs }}
+
+  {{ .Outputs }}
 
 output:
   file: README.md
