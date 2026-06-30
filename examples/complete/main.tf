@@ -62,13 +62,20 @@ module "network" {
     "snet-app-${local.vnet_name}" = {
       address_prefixes  = ["10.10.1.0/24"]
       service_endpoints = ["Microsoft.Storage", "Microsoft.KeyVault"]
-      nsg_id            = azurerm_network_security_group.this.id
-      route_table_id    = azurerm_route_table.this.id
     }
     "snet-web-${local.vnet_name}" = {
       address_prefixes = ["10.10.2.0/24"]
       delegations      = ["Microsoft.Web/serverFarms"]
-      nsg_id           = azurerm_network_security_group.this.id
     }
+  }
+
+  # Associations are separate maps keyed by subnet name, so these ids (created in this same apply)
+  # can be computed without breaking for_each.
+  nsg_associations = {
+    "snet-app-${local.vnet_name}" = azurerm_network_security_group.this.id
+    "snet-web-${local.vnet_name}" = azurerm_network_security_group.this.id
+  }
+  route_table_associations = {
+    "snet-app-${local.vnet_name}" = azurerm_route_table.this.id
   }
 }

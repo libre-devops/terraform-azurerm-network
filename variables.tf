@@ -69,6 +69,12 @@ variable "location" {
   type        = string
 }
 
+variable "nsg_associations" {
+  description = "Map of subnet name to network security group id to associate. Keys are subnet names (must exist in subnets); values may be computed in the same apply (the static keys keep for_each valid)."
+  type        = map(string)
+  default     = {}
+}
+
 variable "private_endpoint_vnet_policies" {
   description = "Private endpoint policy mode for the virtual network. Allowed: Disabled, Basic."
   type        = string
@@ -88,6 +94,12 @@ variable "resource_group_id" {
     condition     = try(provider::azurerm::parse_resource_id(var.resource_group_id).resource_type, "") == "resourceGroups"
     error_message = "resource_group_id must be a resource group id of the form /subscriptions/<sub>/resourceGroups/<name>."
   }
+}
+
+variable "route_table_associations" {
+  description = "Map of subnet name to route table id to associate. Keys are subnet names (must exist in subnets); values may be computed in the same apply."
+  type        = map(string)
+  default     = {}
 }
 
 variable "subnet_delegation_actions" {
@@ -180,8 +192,10 @@ variable "subnet_delegation_actions" {
 variable "subnets" {
   description = <<-EOT
     Subnets to create in the virtual network, keyed by subnet name. Each subnet sets its address
-    prefixes and optional service endpoints, delegations (service names only; the actions are looked
-    up from subnet_delegation_actions), and an optional NSG / route table id to associate.
+    prefixes (or ip_address_pool) and optional service endpoints, delegations (service names only;
+    the actions are looked up from subnet_delegation_actions), and policy flags. NSG and route table
+    associations are separate inputs (nsg_associations / route_table_associations) so their ids may be
+    computed in the same apply.
 
     Secure defaults: private_endpoint_network_policies defaults to "Enabled" (enforces NSG and route
     table rules on private endpoints), and default_outbound_access_enabled defaults to false (no
@@ -198,8 +212,6 @@ variable "subnets" {
     private_link_service_network_policies_enabled = optional(bool, true)
     default_outbound_access_enabled               = optional(bool, false)
     sharing_scope                                 = optional(string, null)
-    nsg_id                                        = optional(string, null)
-    route_table_id                                = optional(string, null)
   }))
   default = {}
 

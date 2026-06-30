@@ -80,15 +80,17 @@ resource "azurerm_subnet" "this" {
   }
 }
 
+# Associations are keyed by subnet name (static keys), so the NSG / route table ids in the values can
+# be computed in the same apply without breaking for_each.
 resource "azurerm_subnet_network_security_group_association" "this" {
-  for_each = { for name, subnet in var.subnets : name => subnet.nsg_id if subnet.nsg_id != null }
+  for_each = var.nsg_associations
 
   subnet_id                 = azurerm_subnet.this[each.key].id
   network_security_group_id = each.value
 }
 
 resource "azurerm_subnet_route_table_association" "this" {
-  for_each = { for name, subnet in var.subnets : name => subnet.route_table_id if subnet.route_table_id != null }
+  for_each = var.route_table_associations
 
   subnet_id      = azurerm_subnet.this[each.key].id
   route_table_id = each.value

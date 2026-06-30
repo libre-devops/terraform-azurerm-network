@@ -84,16 +84,20 @@ run "associations_created_when_ids_supplied" {
     subnets = {
       "snet-app-vnet-ldo-uks-tst-001" = {
         address_prefixes = ["10.0.1.0/24"]
-        nsg_id           = "/subscriptions/0000/resourceGroups/rg/providers/Microsoft.Network/networkSecurityGroups/nsg-app"
-        route_table_id   = "/subscriptions/0000/resourceGroups/rg/providers/Microsoft.Network/routeTables/rt-app"
         delegations      = ["Microsoft.Web/serverFarms"]
       }
+    }
+    nsg_associations = {
+      "snet-app-vnet-ldo-uks-tst-001" = "/subscriptions/0000/resourceGroups/rg/providers/Microsoft.Network/networkSecurityGroups/nsg-app"
+    }
+    route_table_associations = {
+      "snet-app-vnet-ldo-uks-tst-001" = "/subscriptions/0000/resourceGroups/rg/providers/Microsoft.Network/routeTables/rt-app"
     }
   }
 
   assert {
     condition     = length(azurerm_subnet_network_security_group_association.this) == 1 && length(azurerm_subnet_route_table_association.this) == 1
-    error_message = "An NSG and a route table association should be created when ids are supplied."
+    error_message = "An NSG and a route table association should be created when association maps are supplied."
   }
 }
 

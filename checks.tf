@@ -10,6 +10,18 @@ check "all_subnets_created" {
   }
 }
 
+# Association map keys must name subnets that exist, otherwise the association silently references a
+# missing subnet. (A missing key also errors at plan, but this gives a clearer message.)
+check "associations_reference_known_subnets" {
+  assert {
+    condition = alltrue(concat(
+      [for name in keys(var.nsg_associations) : contains(keys(var.subnets), name)],
+      [for name in keys(var.route_table_associations) : contains(keys(var.subnets), name)],
+    ))
+    error_message = "nsg_associations / route_table_associations keys must be subnet names defined in var.subnets."
+  }
+}
+
 # Every delegated subnet should resolve known actions from subnet_delegation_actions. A delegation
 # whose service name is not in the lookup falls back to platform-inferred actions, which usually
 # means the service name is a typo, so surface it as a warning.

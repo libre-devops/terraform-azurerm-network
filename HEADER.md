@@ -61,8 +61,12 @@ module "network" {
       address_prefixes  = ["10.0.1.0/24"]
       service_endpoints = ["Microsoft.Storage"]
       delegations       = ["Microsoft.Web/serverFarms"]
-      nsg_id            = module.nsg.id
     }
+  }
+
+  # Associations are keyed by subnet name; the ids may be computed in the same apply.
+  nsg_associations = {
+    "snet-app-vnet-ldo-uks-prd-001" = module.nsg.id
   }
 }
 ```
