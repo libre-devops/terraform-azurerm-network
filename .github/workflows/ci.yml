@@ -55,7 +55,15 @@ jobs:
             ( cd "${d%/}" && tflint --init && tflint --recursive )
           done
 
-      - name: Trivy config scan (fail on HIGH or CRITICAL)
+      - name: Trivy config scan (report CRITICAL to LOW, non-blocking)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: CRITICAL,HIGH,MEDIUM,LOW
+          exit-code: "0"
+
+      - name: Trivy config gate (fail on HIGH or CRITICAL)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           scan-type: config
