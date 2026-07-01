@@ -43,6 +43,11 @@ output "subscription_id" {
   value       = local.rg.subscription_id
 }
 
+output "tags" {
+  description = "The tags applied to the virtual network."
+  value       = azurerm_virtual_network.this.tags
+}
+
 output "vnet_address_space" {
   description = "The address space of the virtual network."
   value       = azurerm_virtual_network.this.address_space

@@ -180,6 +180,7 @@ No modules.
 | <a name="output_subnet_route_table_association_ids"></a> [subnet\_route\_table\_association\_ids](#output\_subnet\_route\_table\_association\_ids) | Map of subnet name to its route table association id. |
 | <a name="output_subnets"></a> [subnets](#output\_subnets) | The full azurerm\_subnet resources, keyed by subnet name. |
 | <a name="output_subscription_id"></a> [subscription\_id](#output\_subscription\_id) | Subscription id parsed from resource\_group\_id. |
+| <a name="output_tags"></a> [tags](#output\_tags) | The tags applied to the virtual network. |
 | <a name="output_vnet_address_space"></a> [vnet\_address\_space](#output\_vnet\_address\_space) | The address space of the virtual network. |
 | <a name="output_vnet_dns_servers"></a> [vnet\_dns\_servers](#output\_vnet\_dns\_servers) | The DNS servers set on the virtual network. |
 | <a name="output_vnet_guid"></a> [vnet\_guid](#output\_vnet\_guid) | The GUID of the virtual network. |

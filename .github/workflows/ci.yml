@@ -77,11 +77,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Plan and apply the minimal example
+      - name: Plan and apply the example stacks
         uses: libre-devops/terraform-azure@v1
         with:
           terraform-code-location: examples
-          terraform-stack-to-run-json: '["minimal"]'
+          terraform-stack-to-run-json: '["minimal","complete"]'
           run-terraform-plan: true
           run-terraform-apply: true
           arm-client-id: ${{ vars.AZURE_CLIENT_ID }}
@@ -93,11 +93,11 @@ jobs:
 
       # Runs only if the apply step succeeded, so a failure exits the job rather than chaining
       # a destroy onto a broken apply.
-      - name: Plan-destroy and destroy the minimal example
+      - name: Plan-destroy and destroy the example stacks
         uses: libre-devops/terraform-azure@v1
         with:
           terraform-code-location: examples
-          terraform-stack-to-run-json: '["minimal"]'
+          terraform-stack-to-run-json: '["minimal","complete"]'
           run-terraform-plan: false
           run-terraform-plan-destroy: true
           run-terraform-destroy: true
