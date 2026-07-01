@@ -71,8 +71,16 @@ resource "azurerm_route_table" "this" {
   tags                = module.tags.tags
 }
 
-# Complete call: multiple subnets exercising service endpoints, a delegation, and NSG / route table
-# associations by id.
+# Complete call: exercises the runnable surface, DNS servers, flow timeout, vnet private-endpoint
+# policy, and three subnets covering service endpoints, a delegation, private-endpoint policy and
+# default-outbound overrides, and NSG / route table associations.
+#
+# The remaining optionals need external prerequisites, set them when you have those:
+#   ddos_protection_plan   = { id = <ddos plan id>, enable = true }
+#   encryption_enforcement = "AllowUnencrypted"                       # vnet-encryption-capable infra
+#   ip_address_pool        = { id = <IPAM pool id>, number_of_ip_addresses = "256" }
+#   edge_zone              = "<edge zone>"
+#   bgp_community          = "12076:20000"                            # ExpressRoute route advertisement
 module "network" {
   source = "../../"
 
@@ -80,19 +88,26 @@ module "network" {
   location          = local.location
   tags              = module.tags.tags
 
-  vnet_name               = local.vnet_name
-  address_space           = ["10.10.0.0/16"]
-  dns_servers             = ["10.10.0.4", "10.10.0.5"]
-  flow_timeout_in_minutes = 10
+  vnet_name                      = local.vnet_name
+  address_space                  = ["10.10.0.0/16"]
+  dns_servers                    = ["10.10.0.4", "10.10.0.5"]
+  flow_timeout_in_minutes        = 10
+  private_endpoint_vnet_policies = "Basic"
 
   subnets = {
     "snet-app-${local.vnet_name}" = {
-      address_prefixes  = ["10.10.1.0/24"]
-      service_endpoints = ["Microsoft.Storage", "Microsoft.KeyVault"]
+      address_prefixes                              = ["10.10.1.0/24"]
+      service_endpoints                             = ["Microsoft.Storage", "Microsoft.KeyVault"]
+      private_link_service_network_policies_enabled = true
     }
     "snet-web-${local.vnet_name}" = {
       address_prefixes = ["10.10.2.0/24"]
       delegations      = ["Microsoft.Web/serverFarms"]
+    }
+    "snet-pe-${local.vnet_name}" = {
+      address_prefixes                  = ["10.10.3.0/24"]
+      private_endpoint_network_policies = "Disabled" # a private endpoint subnet
+      default_outbound_access_enabled   = true       # override the secure default
     }
   }
 
@@ -101,6 +116,7 @@ module "network" {
   nsg_associations = {
     "snet-app-${local.vnet_name}" = azurerm_network_security_group.this.id
     "snet-web-${local.vnet_name}" = azurerm_network_security_group.this.id
+    "snet-pe-${local.vnet_name}"  = azurerm_network_security_group.this.id
   }
   route_table_associations = {
     "snet-app-${local.vnet_name}" = azurerm_route_table.this.id
